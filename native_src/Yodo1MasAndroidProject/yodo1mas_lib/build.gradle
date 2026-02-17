@@ -1,0 +1,110 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Yodo1 MAS SDK (full bundle with all ad networks)
+    implementation 'com.yodo1.mas:full:4.17.1'
+
+    // Adobe AIR FRE (Flash Runtime Extensions)
+    // Place FlashRuntimeExtensions.jar in libs/ folder
+    implementation files('libs/FlashRuntimeExtensions.jar')
+}
+
+/**
+ * Gradle task to collect all runtime dependencies (JARs and AARs) into a single folder
+ * for packaging into the Adobe AIR ANE.
+ *
+ * Usage: ./gradlew yodo1mas_lib:collectDependencies
+ * Output: build/ane-deps/
+ */
+task collectDependencies {
+    description 'Collects all runtime dependency JARs/AARs for ANE packaging'
+
+    doLast {
+        def outputDir = file("${buildDir}/ane-deps")
+        delete outputDir
+        outputDir.mkdirs()
+
+        def config = configurations.getByName('releaseRuntimeClasspath')
+        // Track used output filenames and processed source files to avoid collisions and duplicates
+        def usedOutputNames = new HashSet<String>()
+        def processedFiles = new HashSet<String>()
+
+        config.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            def id = artifact.moduleVersion.id
+            // Skip our local FlashRuntimeExtensions.jar
+            if (id.name == 'FlashRuntimeExtensions' || artifact.file.name == 'FlashRuntimeExtensions.jar') {
+                return
+            }
+
+            // Skip if we already processed this exact file (dedup)
+            def canonicalPath = artifact.file.canonicalPath
+            if (processedFiles.contains(canonicalPath)) {
+                return
+            }
+            processedFiles.add(canonicalPath)
+
+            // Use the original artifact filename
+            def destName = artifact.file.name
+
+            // If filename collides, prefix with sanitized group ID
+            if (usedOutputNames.contains(destName)) {
+                def safeGroup = id.group.replace('.', '_')
+                def ext = destName.endsWith('.aar') ? 'aar' : 'jar'
+                def baseName = destName.take(destName.lastIndexOf('.'))
+                destName = "${safeGroup}--${baseName}.${ext}"
+            }
+            usedOutputNames.add(destName)
+
+            copy {
+                from artifact.file
+                into outputDir
+                rename { destName }
+            }
+        }
+
+        println ""
+        println "======================================"
+        println " Dependencies collected in: ${outputDir}"
+        println "======================================"
+        def files = fileTree(outputDir).files.sort { it.name }
+        def jars = files.findAll { it.name.endsWith('.jar') }
+        def aars = files.findAll { it.name.endsWith('.aar') }
+        println " JARs: ${jars.size()}"
+        println " AARs: ${aars.size()}"
+        println " Total: ${files.size()}"
+        println ""
+
+        // Print XML for platform-android.xml
+        println "<!-- Copy below into platform-android.xml <packagedDependencies> -->"
+        files.each { f ->
+            println "        <packagedDependency>${f.name}</packagedDependency>"
+        }
+        println ""
+    }
+}

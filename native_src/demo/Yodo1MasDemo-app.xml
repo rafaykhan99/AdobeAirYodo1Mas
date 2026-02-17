@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--
+    Yodo1 MAS ANE Demo - AIR Application Descriptor
+    
+    IMPORTANT: Replace these values with your actual app config:
+    - YOUR_ADMOB_APP_ID: Your AdMob ID from the MAS Dashboard
+    - YourAppKey: Your Yodo1 MAS app key
+-->
+<application xmlns="http://ns.adobe.com/air/application/51.3">
+    <id>com.JamieParish.TheWanderer</id>
+    <versionNumber>1.0.0</versionNumber>
+    <filename>Yodo1MasDemo</filename>
+
+    <name>Yodo1 MAS Demo</name>
+    <description>Yodo1 MAS Adobe AIR Native Extension Demo</description>
+
+    <initialWindow>
+        <content>Yodo1MasDemo.swf</content>
+        <autoOrients>true</autoOrients>
+        <fullScreen>true</fullScreen>
+        <visible>true</visible>
+        <renderMode>direct</renderMode>
+    </initialWindow>
+
+    <!-- Android Configuration -->
+    <android>
+        <manifestAdditions><![CDATA[
+            <manifest android:installLocation="auto">
+                <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34"/>
+
+                <!-- Required permissions -->
+                <uses-permission android:name="android.permission.INTERNET"/>
+                <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+                <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+                <application android:hardwareAccelerated="true">
+
+                    <!-- Yodo1 MAS requires AdMob Application ID -->
+                    <!-- Get your AdMob ID from: MAS Dashboard > Management > Games > Manage > Details -->
+                    <meta-data
+                        android:name="com.google.android.gms.ads.APPLICATION_ID"
+                        android:value="ca-app-pub-7188592076082444~6163479903"/>
+
+                    <!-- AppLovin SDK Key (required by Yodo1 MAS) -->
+                    <meta-data
+                        android:name="applovin.sdk.key"
+                        android:value="xcGD2fy-GdmiZQapx_kUSy5SMKyLoXBk8RyB5u9MVv34KetGdbl4XrXvAUFy0Qg9scKyVTI0NM4i_yzdXih4XE"/>
+
+                </application>
+            </manifest>
+        ]]></manifestAdditions>
+    </android>
+
+    <!-- iOS Configuration (for future use) -->
+    <iPhone>
+        <InfoAdditions><![CDATA[
+            <key>MinimumOSVersion</key>
+            <string>14.0</string>
+            <key>UIDeviceFamily</key>
+            <array>
+                <string>1</string>
+                <string>2</string>
+            </array>
+            <!-- Required for AdMob on iOS -->
+            <key>GADApplicationIdentifier</key>
+            <string>YOUR_ADMOB_APP_ID</string>
+            <!-- App Tracking Transparency -->
+            <key>NSUserTrackingUsageDescription</key>
+            <string>This identifier will be used to deliver personalized ads to you.</string>
+            <!-- Transport security -->
+            <key>NSAppTransportSecurity</key>
+            <dict>
+                <key>NSAllowsArbitraryLoads</key>
+                <true/>
+                <key>NSAllowsArbitraryLoadsForMedia</key>
+                <true/>
+                <key>NSAllowsArbitraryLoadsInWebContent</key>
+                <true/>
+            </dict>
+        ]]></InfoAdditions>
+        <requestedDisplayResolution>high</requestedDisplayResolution>
+    </iPhone>
+
+    <!-- Extensions -->
+    <extensions>
+        <extensionID>com.AdobeAir.Yodo1Mas</extensionID>
+    </extensions>
+</application>

@@ -1,0 +1,111 @@
+<project name="Yodo1MasANE" basedir="." default="start">
+
+    <property file="build.properties"/>
+
+    <!-- Clean and prepare build directories -->
+    <target name="cleanBinaries">
+        <delete dir="${BINARIES_FOLDER}"/>
+        <mkdir dir="${BINARIES_FOLDER}"/>
+        <mkdir dir="${BINARIES_FOLDER}/android"/>
+        <mkdir dir="${BINARIES_FOLDER}/default"/>
+        <!-- iOS directory for future use -->
+        <!-- <mkdir dir="${BINARIES_FOLDER}/ios"/> -->
+    </target>
+
+    <!-- Copy the compiled JAR and dependencies to the build folder -->
+    <target name="packjar" depends="cleanBinaries">
+        <echo message="Copying Android native library and dependencies..."/>
+
+        <!-- Copy the compiled classes.jar from the Android project -->
+        <copy file="./${ANDROID_PROJECT}/${ANDROID_LIB_MODULE}/build/intermediates/aar_main_jar/release/classes.jar"
+              tofile="${BINARIES_FOLDER}/android/yodo1mas.jar"/>
+
+        <!-- Copy all resolved SDK dependency JARs and AARs -->
+        <copy todir="${BINARIES_FOLDER}/android" flatten="true">
+            <fileset dir="./${ANDROID_PROJECT}/${ANDROID_LIB_MODULE}/build/ane-deps">
+                <include name="**/*.jar"/>
+                <include name="**/*.aar"/>
+            </fileset>
+        </copy>
+
+        <!-- Remove FlashRuntimeExtensions.jar (should not be packaged in the ANE) -->
+        <delete file="${BINARIES_FOLDER}/android/FlashRuntimeExtensions.jar"/>
+    </target>
+
+    <!-- Extract library.swf from the compiled SWC and copy to platform folders -->
+    <target name="unzipSwf" depends="packjar">
+        <mkdir dir="temp"/>
+        <unzip src="${SWC_PATH}" dest="temp"/>
+        <copy file="temp/library.swf" todir="${BINARIES_FOLDER}/android"/>
+        <copy file="temp/library.swf" todir="${BINARIES_FOLDER}/default"/>
+        <!-- <copy file="temp/library.swf" todir="${BINARIES_FOLDER}/ios"/> -->
+        <delete dir="temp"/>
+    </target>
+
+    <!-- Package the ANE -->
+    <target name="compile" depends="unzipSwf">
+        <echo message="Packaging ANE..."/>
+        <java jar="${ADT_JAR}" fork="true" failonerror="true">
+            <arg value="-package"/>
+            <arg value="-target"/>
+            <arg value="ane"/>
+            <arg value="${ANE_PATH}"/>
+            <arg value="${EXTENSION_XML}"/>
+
+            <arg value="-swc"/>
+            <arg value="${SWC_PATH}"/>
+
+            <!-- Android ARM -->
+            <arg value="-platform"/>
+            <arg value="Android-ARM"/>
+            <arg value="-platformoptions"/>
+            <arg value="${AND_PLATFORM_OPTIONS}"/>
+            <arg value="-C"/>
+            <arg value="${BINARIES_FOLDER}/android"/>
+            <arg value="."/>
+
+            <!-- Android ARM64 -->
+            <arg value="-platform"/>
+            <arg value="Android-ARM64"/>
+            <arg value="-platformoptions"/>
+            <arg value="${AND_PLATFORM_OPTIONS}"/>
+            <arg value="-C"/>
+            <arg value="${BINARIES_FOLDER}/android"/>
+            <arg value="."/>
+
+            <!-- Android x86 -->
+            <arg value="-platform"/>
+            <arg value="Android-x86"/>
+            <arg value="-platformoptions"/>
+            <arg value="${AND_PLATFORM_OPTIONS}"/>
+            <arg value="-C"/>
+            <arg value="${BINARIES_FOLDER}/android"/>
+            <arg value="."/>
+
+            <!-- iOS (future) -->
+            <!--
+            <arg value="-platform"/>
+            <arg value="iPhone-ARM"/>
+            <arg value="-platformoptions"/>
+            <arg value="${IOS_PLATFORM_OPTIONS}"/>
+            <arg value="-C"/>
+            <arg value="${BINARIES_FOLDER}/ios"/>
+            <arg value="."/>
+            -->
+
+            <!-- Default (stub for desktop/simulator) -->
+            <arg value="-platform"/>
+            <arg value="default"/>
+            <arg value="-C"/>
+            <arg value="${BINARIES_FOLDER}/default"/>
+            <arg value="library.swf"/>
+        </java>
+    </target>
+
+    <!-- Copy resulting ANE to demo folder -->
+    <target name="start" depends="compile">
+        <echo message="ANE packaged successfully: ${ANE_PATH}"/>
+        <mkdir dir="${DEMO_FOLDER}"/>
+        <copy file="${ANE_PATH}" todir="${DEMO_FOLDER}/"/>
+    </target>
+</project>
