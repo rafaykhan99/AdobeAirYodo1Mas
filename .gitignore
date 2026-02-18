@@ -18,6 +18,7 @@ native_src/Yodo1MasAndroidProject/local.properties
 .idea/
 *.iml
 .DS_Store
+*.hprof
 .vscode/
 
 # FlashRuntimeExtensions.jar (user must copy from their own AIR SDK)

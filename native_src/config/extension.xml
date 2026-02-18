@@ -16,6 +16,8 @@
                 <finalizer>com.AdobeAir.Yodo1Mas.Yodo1MasExtension</finalizer>
             </applicationDeployment>
         </platform>
+        <!-- Android-x86 removed to reduce ANE size (only needed for emulators) -->
+        <!--
         <platform name="Android-x86">
             <applicationDeployment>
                 <nativeLibrary>yodo1mas.jar</nativeLibrary>
@@ -23,6 +25,7 @@
                 <finalizer>com.AdobeAir.Yodo1Mas.Yodo1MasExtension</finalizer>
             </applicationDeployment>
         </platform>
+        -->
         <!-- iOS platform - to be implemented later -->
         <!--
         <platform name="iPhone-ARM">

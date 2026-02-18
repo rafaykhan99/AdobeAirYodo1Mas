@@ -73,7 +73,8 @@
             <arg value="${BINARIES_FOLDER}/android"/>
             <arg value="."/>
 
-            <!-- Android x86 -->
+            <!-- Android x86 (removed to reduce ANE size — only needed for emulators) -->
+            <!--
             <arg value="-platform"/>
             <arg value="Android-x86"/>
             <arg value="-platformoptions"/>
@@ -81,6 +82,7 @@
             <arg value="-C"/>
             <arg value="${BINARIES_FOLDER}/android"/>
             <arg value="."/>
+            -->
 
             <!-- iOS (future) -->
             <!--

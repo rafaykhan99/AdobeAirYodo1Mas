@@ -102,11 +102,28 @@ cp /path/to/working/gradle/wrapper/gradle-wrapper.jar android_project/gradle/wra
 #      Change android:name=".AIRAppEntry" to:
 #        android:name="air.com.yourcompany.yourgame.AIRAppEntry"
 
-# 4. Build the APK with Gradle
+# 4. (Optional) Reduce APK size by removing emulator-only ABIs:
+#    By default the APK includes x86 and x86_64 native libraries which are only
+#    needed for Android emulators. Removing them saves ~45 MB.
+#    Edit android_project/app/build.gradle and add an ndk block inside defaultConfig:
+#
+#      defaultConfig {
+#          ...
+#          ndk {
+#              abiFilters 'arm64-v8a', 'armeabi-v7a'
+#          }
+#      }
+#
+#    To also drop older 32-bit ARM support (armeabi-v7a) for an additional ~16 MB
+#    savings, use only:
+#          ndk { abiFilters 'arm64-v8a' }
+#    Note: This does not affect the ANE itself, only what gets packaged in the APK.
+
+# 5. Build the APK with Gradle
 cd android_project
 JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew assembleDebug
 
-# 5. Install
+# 6. Install
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
@@ -509,6 +526,52 @@ native_src/
 +-- build.sh                             # One-click build
 ```
 
+### Updating the ANE
+
+After rebuilding the ANE (e.g. after changing dependencies or platform targets), follow these steps to update it in your project and on GitHub:
+
+```bash
+cd native_src
+
+# 1. Rebuild the ANE
+./build.sh
+# Output: dest/yodo1mas.ane
+
+# 2. Copy the updated ANE to your demo/test project
+cp dest/yodo1mas.ane demo/anes/yodo1mas.ane
+
+# 3. If using an android-studio Gradle project, clean and rebuild the APK
+cd demo/android_project
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew clean assembleDebug
+
+# 4. (Optional) Install on device to verify
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# 5. Commit and push to GitHub
+cd ../../../
+git add -A
+git commit -m "Update ANE: <describe your changes>"
+git push origin main
+```
+
+> **Note:** The ANE binary (`dest/yodo1mas.ane`) and demo APKs are gitignored.
+> Only source files, build configs, and dependency lists are tracked in git.
+> To distribute the ANE, attach it as a GitHub Release asset or host it separately.
+
+### Creating a GitHub Release with the ANE
+
+1. Tag the release:
+   ```bash
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   git push origin v1.0.0
+   ```
+2. Go to your GitHub repository → **Releases** → **Create a new release**
+3. Select the tag you just pushed
+4. Attach `native_src/dest/yodo1mas.ane` as a release asset
+5. Publish the release
+
+Users can then download the ANE directly from the Releases page.
+
 ---
 
 ## Troubleshooting
@@ -536,7 +599,7 @@ If you remove the `air.` prefix from your package name, change the activity decl
 - **Minimum Android SDK**: 24 (Android 7.0)
 - **Target Android SDK**: 34 (Android 14)
 - **Total dependencies**: 285 (48 JARs + 237 AARs)
-- **ANE size**: ~280 MB (includes all ad network adapters)
+- **ANE size**: ~150 MB (ARM + ARM64, all ad network adapters; x86 removed to reduce size)
 
 ## Links
 
