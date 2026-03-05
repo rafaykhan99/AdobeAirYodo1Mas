@@ -1,0 +1,165 @@
+<platform xmlns="http://ns.adobe.com/air/extension/51.1">
+
+    <!-- iOS SDK version (>= 11 skips the legacy armv7 universal binary check) -->
+    <sdkVersion>13.0</sdkVersion>
+
+    <packagedDependencies>
+        <packagedDependency>AppLovinAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationBidMachineAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationBigoAdsAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationByteDanceAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationGoogleAdManagerAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationGoogleAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationIronSourceAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationUnityAdsAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinMediationVungleAdapter.framework</packagedDependency>
+        <packagedDependency>AppLovinSDK.framework</packagedDependency>
+        <packagedDependency>BidMachine.framework</packagedDependency>
+        <packagedDependency>BigoADS.framework</packagedDependency>
+        <packagedDependency>DTExchangeAdapter.framework</packagedDependency>
+        <packagedDependency>FBAudienceNetwork.framework</packagedDependency>
+        <packagedDependency>GoogleMobileAds.framework</packagedDependency>
+        <packagedDependency>IASDKCore.framework</packagedDependency>
+        <packagedDependency>ISAdMobAdapter.framework</packagedDependency>
+        <packagedDependency>ISAppLovinAdapter.framework</packagedDependency>
+        <packagedDependency>ISBidMachineAdapter.framework</packagedDependency>
+        <packagedDependency>ISBigoAdapter.framework</packagedDependency>
+        <packagedDependency>ISFacebookAdapter.framework</packagedDependency>
+        <packagedDependency>ISFyberAdapter.framework</packagedDependency>
+        <packagedDependency>ISInMobiAdapter.framework</packagedDependency>
+        <packagedDependency>ISMintegralAdapter.framework</packagedDependency>
+        <packagedDependency>ISMolocoAdapter.framework</packagedDependency>
+        <packagedDependency>ISPangleAdapter.framework</packagedDependency>
+        <packagedDependency>ISUnityAdsAdapter.framework</packagedDependency>
+        <packagedDependency>ISVungleAdapter.framework</packagedDependency>
+        <packagedDependency>InMobiAdapter.framework</packagedDependency>
+        <packagedDependency>InMobiSDK.framework</packagedDependency>
+        <packagedDependency>IronSource.framework</packagedDependency>
+        <packagedDependency>IronSourceAdapter.framework</packagedDependency>
+        <packagedDependency>LiftoffMonetizeAdapter.framework</packagedDependency>
+        <packagedDependency>MTGSDK.framework</packagedDependency>
+        <packagedDependency>MTGSDKBanner.framework</packagedDependency>
+        <packagedDependency>MTGSDKBidding.framework</packagedDependency>
+        <packagedDependency>MTGSDKInterstitialVideo.framework</packagedDependency>
+        <packagedDependency>MTGSDKNativeAdvanced.framework</packagedDependency>
+        <packagedDependency>MTGSDKNewInterstitial.framework</packagedDependency>
+        <packagedDependency>MTGSDKReward.framework</packagedDependency>
+        <packagedDependency>MTGSDKSplash.framework</packagedDependency>
+        <packagedDependency>MetaAdapter.framework</packagedDependency>
+        <packagedDependency>MintegralAdapter.framework</packagedDependency>
+        <packagedDependency>MolocoAdapter.framework</packagedDependency>
+        <packagedDependency>MolocoSDK.framework</packagedDependency>
+        <packagedDependency>OMSDK_Appodeal.framework</packagedDependency>
+        <packagedDependency>PAGAdSDK.framework</packagedDependency>
+        <packagedDependency>PangleAdapter.framework</packagedDependency>
+        <packagedDependency>StackModules.framework</packagedDependency>
+        <packagedDependency>StackProductPresentation.framework</packagedDependency>
+        <packagedDependency>StackRendering.framework</packagedDependency>
+        <packagedDependency>UnityAdapter.framework</packagedDependency>
+        <packagedDependency>UnityAds.framework</packagedDependency>
+        <packagedDependency>UserMessagingPlatform.framework</packagedDependency>
+        <packagedDependency>VungleAdsSDK.framework</packagedDependency>
+        <packagedDependency>Yodo1MasCore.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationAdMob.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationApplovin.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationBidMachine.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationBigo.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationFacebook.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationFyber.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationInMobi.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationIronSource.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationMintegral.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationMoloco.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationPangle.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationUnityAds.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationVungle.framework</packagedDependency>
+        <packagedDependency>Yodo1MasMediationYodo1.framework</packagedDependency>
+        <!-- Source pod frameworks (compiled from source) -->
+        <packagedDependency>AFNetworking.framework</packagedDependency>
+        <packagedDependency>YDYThinkingSDK.framework</packagedDependency>
+        <packagedDependency>YYModel.framework</packagedDependency>
+        <!-- UIKit iOS 18+ stub classes -->
+        <packagedDependency>libUIKitStubs.a</packagedDependency>
+        <!-- Swift 6.0 typed throws AsyncIterator stubs -->
+        <packagedDependency>libSwiftConcurrencyStubs.a</packagedDependency>
+        <!-- Swift 6 system shim FORCE_LOAD stubs -->
+        <packagedDependency>libSwiftForceLoadStubs.a</packagedDependency>
+    </packagedDependencies>
+
+    <linkerOptions>
+        <option>-rpath</option>
+        <option>@executable_path/Frameworks</option>
+        <option>-ObjC</option>
+        <option>-lz</option>
+        <option>-lsqlite3</option>
+        <option>-lxml2</option>
+        <option>-lc++</option>
+        <option>-lresolv</option>
+        <option>-lbz2</option>
+        <!-- System frameworks required by ad SDKs -->
+        <option>-framework AdSupport</option>
+        <option>-framework AdServices</option>
+        <option>-framework AppTrackingTransparency</option>
+        <option>-framework AudioToolbox</option>
+        <option>-framework AVFoundation</option>
+        <option>-framework CFNetwork</option>
+        <option>-framework CoreData</option>
+        <option>-framework CoreFoundation</option>
+        <option>-framework CoreGraphics</option>
+        <option>-framework CoreImage</option>
+        <option>-framework CoreLocation</option>
+        <option>-framework CoreMedia</option>
+        <option>-framework CoreMotion</option>
+        <option>-framework CoreServices</option>
+        <option>-framework CoreTelephony</option>
+        <option>-framework CoreText</option>
+        <option>-framework CoreVideo</option>
+        <option>-framework ImageIO</option>
+        <option>-framework JavaScriptCore</option>
+        <option>-framework MediaPlayer</option>
+        <option>-framework MessageUI</option>
+        <option>-framework Metal</option>
+        <option>-framework MetalKit</option>
+        <option>-framework MetalPerformanceShaders</option>
+        <option>-framework MobileCoreServices</option>
+        <option>-framework Network</option>
+        <option>-framework QuartzCore</option>
+        <option>-framework SafariServices</option>
+        <option>-framework Security</option>
+        <option>-framework StoreKit</option>
+        <option>-framework SwiftUI</option>
+        <option>-framework SystemConfiguration</option>
+        <option>-framework UIKit</option>
+        <option>-framework WebKit</option>
+        <!-- Swift runtime -->
+        <option>-lswiftCore</option>
+        <option>-lswiftFoundation</option>
+        <option>-lswiftUIKit</option>
+        <option>-lswiftDispatch</option>
+        <option>-lswiftObjectiveC</option>
+        <option>-lswiftCoreFoundation</option>
+        <option>-lswiftCoreGraphics</option>
+        <option>-lswiftDarwin</option>
+        <option>-lswiftCompatibility50</option>
+        <option>-lswiftCompatibility51</option>
+        <option>-lswiftCompatibility56</option>
+        <option>-lswiftCompatibilityConcurrency</option>
+        <option>-lswiftCompatibilityDynamicReplacements</option>
+        <option>-lswiftCompatibilityPacks</option>
+
+        <!-- Allow iOS 18+ UIKit symbols to be undefined (resolved at runtime) -->
+        <option>-U _OBJC_CLASS_$_UIUpdateLink</option>
+        <option>-U _OBJC_CLASS_$_UIUpdateActionPhase</option>
+        <!-- Swift 6 system shim libraries (stubs in ADT stub dir) -->
+        <option>-L/Users/rafay/AIRSDK/AIRSDK_51.1.1/lib/aot/stub</option>
+        <option>-lswift_Builtin_float</option>
+        <option>-lswift_errno</option>
+        <option>-lswift_math</option>
+        <option>-lswift_signal</option>
+        <option>-lswift_stdio</option>
+        <option>-lswift_time</option>
+        <option>-lswiftsys_time</option>
+        <option>-lswiftunistd</option>
+    </linkerOptions>
+
+</platform>

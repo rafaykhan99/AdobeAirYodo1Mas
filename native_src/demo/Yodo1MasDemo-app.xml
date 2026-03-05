@@ -6,8 +6,8 @@
     - YOUR_ADMOB_APP_ID: Your AdMob ID from the MAS Dashboard
     - YourAppKey: Your Yodo1 MAS app key
 -->
-<application xmlns="http://ns.adobe.com/air/application/51.3">
-    <id>com.JamieParish.TheWanderer</id>
+<application xmlns="http://ns.adobe.com/air/application/51.1">
+    <id>com.Avennex.ScaryHauntsButcher</id>
     <versionNumber>1.0.0</versionNumber>
     <filename>Yodo1MasDemo</filename>
 
@@ -39,7 +39,7 @@
                     <!-- Get your AdMob ID from: MAS Dashboard > Management > Games > Manage > Details -->
                     <meta-data
                         android:name="com.google.android.gms.ads.APPLICATION_ID"
-                        android:value="ca-app-pub-7188592076082444~6163479903"/>
+                        android:value="ca-app-pub-5580537606944457~5621171343"/>
 
                     <!-- AppLovin SDK Key (required by Yodo1 MAS) -->
                     <meta-data
@@ -63,7 +63,7 @@
             </array>
             <!-- Required for AdMob on iOS -->
             <key>GADApplicationIdentifier</key>
-            <string>YOUR_ADMOB_APP_ID</string>
+            <string>ca-app-pub-5580537606944457~5621171343</string>
             <!-- App Tracking Transparency -->
             <key>NSUserTrackingUsageDescription</key>
             <string>This identifier will be used to deliver personalized ads to you.</string>

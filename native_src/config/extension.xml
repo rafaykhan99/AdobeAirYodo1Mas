@@ -1,4 +1,4 @@
-<extension xmlns="http://ns.adobe.com/air/extension/51.3">
+<extension xmlns="http://ns.adobe.com/air/extension/51.1">
     <id>com.AdobeAir.Yodo1Mas</id>
     <versionNumber>1.0.0</versionNumber>
     <platforms>
@@ -26,16 +26,14 @@
             </applicationDeployment>
         </platform>
         -->
-        <!-- iOS platform - to be implemented later -->
-        <!--
+        <!-- iOS platform -->
         <platform name="iPhone-ARM">
             <applicationDeployment>
-                <nativeLibrary>yodo1mas.a</nativeLibrary>
+                <nativeLibrary>libYodo1MasANE.a</nativeLibrary>
                 <initializer>Yodo1MasExtInitializer</initializer>
                 <finalizer>Yodo1MasExtFinalizer</finalizer>
             </applicationDeployment>
         </platform>
-        -->
         <platform name="default">
             <applicationDeployment/>
         </platform>

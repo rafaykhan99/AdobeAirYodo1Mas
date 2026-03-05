@@ -20,7 +20,7 @@ package
     public class Yodo1MasDemo extends Sprite
     {
         // Replace with your actual Yodo1 MAS App Key
-        private static const APP_KEY:String = "NVwav2Jpsy";
+        private static const APP_KEY:String = "UVkF740ewG";
 
         private var logField:TextField;
         private var yodo1mas:Yodo1Mas;

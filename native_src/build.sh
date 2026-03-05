@@ -48,7 +48,7 @@ fi
 
 # Step 1: Build Android native library and collect dependencies
 echo ""
-echo "[Step 1/4] Building Android native library..."
+echo "[Step 1/5] Building Android native library..."
 echo "--------------------------------------------"
 cd Yodo1MasAndroidProject
 
@@ -62,18 +62,32 @@ fi
 
 cd "$SCRIPT_DIR"
 
-# Step 2: Copy FlashRuntimeExtensions.jar to Android project libs
+# Step 2: Build iOS native library
 echo ""
-echo "[Step 2/4] Setting up FRE JAR..."
+echo "[Step 2/5] Building iOS native library..."
+echo "--------------------------------------------"
+if [ -f "ios/build_ios.sh" ]; then
+    cd ios
+    chmod +x build_ios.sh
+    ./build_ios.sh
+    cd "$SCRIPT_DIR"
+else
+    echo "WARNING: ios/build_ios.sh not found. Skipping iOS build."
+    echo "iOS platform will not be included in the ANE."
+fi
+
+# Step 3: Copy FlashRuntimeExtensions.jar to Android project libs
+echo ""
+echo "[Step 3/5] Setting up FRE JAR..."
 echo "--------------------------------------------"
 if [ ! -f "$FRE_JAR" ]; then
     echo "WARNING: FlashRuntimeExtensions.jar not found at: $FRE_JAR"
     echo "Update AIR_SDK_PATH in build.properties to point to your AIR SDK"
 fi
 
-# Step 3: Compile ActionScript SWC
+# Step 4: Compile ActionScript SWC
 echo ""
-echo "[Step 3/4] Compiling ActionScript SWC library..."
+echo "[Step 4/5] Compiling ActionScript SWC library..."
 echo "--------------------------------------------"
 COMPC="${AIR_SDK_PATH}/bin/compc"
 if [ -f "$COMPC" ]; then
@@ -89,9 +103,9 @@ else
     echo "Update AIR_SDK_PATH in build.properties"
 fi
 
-# Step 4: Package ANE
+# Step 5: Package ANE
 echo ""
-echo "[Step 4/4] Packaging ANE..."
+echo "[Step 5/5] Packaging ANE..."
 echo "--------------------------------------------"
 if command -v ant &> /dev/null; then
     ant

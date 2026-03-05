@@ -34,3 +34,20 @@ native_src/demo/cert.p12
 native_src/demo/cert.p12.bak
 *.p12
 *.p12.bak
+
+# iOS build artifacts
+native_src/ios/Pods/
+native_src/ios/build/
+native_src/ios/.symlinks/
+native_src/ios/Podfile.lock
+native_src/ios/Yodo1MasANE.xcworkspace/
+native_src/ios_resources/
+
+# IPA / dSYM build artifacts
+native_src/demo/*.ipa
+native_src/demo/*.dSYM/
+native_src/demo/air*.tmp
+
+# Temp / DevGradles
+native_src/DevGradles/
+native_src/ios/Yodo1MasANE.xcodeproj/xcuserdata/

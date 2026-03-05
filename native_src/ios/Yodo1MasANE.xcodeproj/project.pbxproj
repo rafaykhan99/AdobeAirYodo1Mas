@@ -1,0 +1,229 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6C480CFC1ED55749641F1A7C /* Pods_Yodo1MasANE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1660E39A8AD96F29976DB05B /* Pods_Yodo1MasANE.framework */; };
+		A1000001 /* Yodo1MasANE.m in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* Yodo1MasANE.m */; };
+		A1000002 /* Yodo1MasBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* Yodo1MasBridge.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1660E39A8AD96F29976DB05B /* Pods_Yodo1MasANE.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Yodo1MasANE.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		91CD1BBF48870234282DF18F /* Pods-Yodo1MasANE.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yodo1MasANE.release.xcconfig"; path = "Target Support Files/Pods-Yodo1MasANE/Pods-Yodo1MasANE.release.xcconfig"; sourceTree = "<group>"; };
+		A2000001 /* Yodo1MasANE.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Yodo1MasANE.m; sourceTree = "<group>"; };
+		A2000002 /* Yodo1MasBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Yodo1MasBridge.m; sourceTree = "<group>"; };
+		A2000003 /* Yodo1MasANE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Yodo1MasANE.h; sourceTree = "<group>"; };
+		A2000004 /* Yodo1MasBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Yodo1MasBridge.h; sourceTree = "<group>"; };
+		A2000005 /* FlashRuntimeExtensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FlashRuntimeExtensions.h; path = FlashRuntimeExtensions.h; sourceTree = "<group>"; };
+		A3000001 /* libYodo1MasANE.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libYodo1MasANE.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6341DD805A6FD1350F99C2AB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C480CFC1ED55749641F1A7C /* Pods_Yodo1MasANE.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		22C67C3D0AB02B871BC7629A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1660E39A8AD96F29976DB05B /* Pods_Yodo1MasANE.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8CC539E7EEFC92C185C60E5C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				91CD1BBF48870234282DF18F /* Pods-Yodo1MasANE.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		A4000001 = {
+			isa = PBXGroup;
+			children = (
+				A4000002 /* Yodo1MasANE */,
+				A4000003 /* Products */,
+				8CC539E7EEFC92C185C60E5C /* Pods */,
+				22C67C3D0AB02B871BC7629A /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		A4000002 /* Yodo1MasANE */ = {
+			isa = PBXGroup;
+			children = (
+				A2000003 /* Yodo1MasANE.h */,
+				A2000001 /* Yodo1MasANE.m */,
+				A2000004 /* Yodo1MasBridge.h */,
+				A2000002 /* Yodo1MasBridge.m */,
+				A2000005 /* FlashRuntimeExtensions.h */,
+			);
+			path = Yodo1MasANE;
+			sourceTree = "<group>";
+		};
+		A4000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A3000001 /* libYodo1MasANE.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A5000001 /* Yodo1MasANE */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A7000003 /* Build configuration list for PBXNativeTarget "Yodo1MasANE" */;
+			buildPhases = (
+				9B45CEF8FE6B5E65610EF551 /* [CP] Check Pods Manifest.lock */,
+				A6000001 /* Sources */,
+				6341DD805A6FD1350F99C2AB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Yodo1MasANE;
+			productName = Yodo1MasANE;
+			productReference = A3000001 /* libYodo1MasANE.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A8000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1540;
+			};
+			buildConfigurationList = A7000001 /* Build configuration list for PBXProject "Yodo1MasANE" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A4000001;
+			productRefGroup = A4000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A5000001 /* Yodo1MasANE */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9B45CEF8FE6B5E65610EF551 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Yodo1MasANE-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A6000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* Yodo1MasANE.m in Sources */,
+				A1000002 /* Yodo1MasBridge.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A7000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A7000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91CD1BBF48870234282DF18F /* Pods-Yodo1MasANE.release.xcconfig */;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Yodo1MasANE",
+					"$(SRCROOT)/Pods/Headers/Public",
+					"$(SRCROOT)/Pods/Headers/Public/Yodo1MasCore",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A7000001 /* Build configuration list for PBXProject "Yodo1MasANE" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A7000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A7000003 /* Build configuration list for PBXNativeTarget "Yodo1MasANE" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A7000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A8000001 /* Project object */;
+}

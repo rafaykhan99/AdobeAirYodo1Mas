@@ -1,17 +1,17 @@
 # Yodo1 MAS Adobe AIR Native Extension (ANE)
 
-Yodo1 MAS (Mediation Ad SDK) plugin for Adobe AIR, supporting Android.
+Yodo1 MAS (Mediation Ad SDK) plugin for Adobe AIR, supporting **Android** and **iOS**.
 
-This ANE wraps the [Yodo1 MAS SDK 4.17.1](https://developers.yodo1.com/) for use in Adobe AIR / ActionScript 3 projects, providing access to multiple ad networks (AdMob, AppLovin, Unity Ads, Vungle, Mintegral, InMobi, Fyber, Bigo, and more) through a single integration.
+This ANE wraps the [Yodo1 MAS SDK 4.17.1](https://developers.yodo1.com/) for use in Adobe AIR / ActionScript 3 projects, providing access to multiple ad networks (AdMob, AppLovin, Unity Ads, Vungle, Mintegral, InMobi, Fyber, Bigo, Pangle, and more) through a single integration.
 
 ## Supported Ad Formats
 
-| Format | Android |
-|--------|---------|
-| Banner | ✅ |
-| Interstitial | ✅ |
-| Rewarded Video | ✅ |
-| App Open | ✅ |
+| Format | Android | iOS |
+|--------|---------|-----|
+| Banner | ✅ | ✅ |
+| Interstitial | ✅ | ✅ |
+| Rewarded Video | ✅ | ✅ |
+| App Open | ✅ | ✅ |
 
 ---
 
@@ -20,10 +20,19 @@ This ANE wraps the [Yodo1 MAS SDK 4.17.1](https://developers.yodo1.com/) for use
 ### Prerequisites
 
 - **AIR SDK** 51.x+ ([Download](https://airsdk.harman.com/download))
-- **Android SDK** with build-tools 34+
-- **Java JDK 17** (required by Gradle 8.x)
 - A [Yodo1 MAS Dashboard](https://mas.yodo1.com/) account with your app registered
 - Your **Yodo1 App Key** and **AdMob App ID** (found in the MAS Dashboard)
+
+**Platform-specific:**
+
+| | Android | iOS |
+|---|---------|-----|
+| OS | Windows / macOS / Linux | **macOS only** |
+| Tools | Android SDK (build-tools 34+), Java JDK 17 | Xcode command line tools, Python 3 |
+| Signing | PKCS12 certificate (`.p12`) | Apple Development certificate + provisioning profile |
+| Device install | `adb` | `ideviceinstaller` (`brew install libimobiledevice ideviceinstaller`) |
+
+> **No CocoaPods / Xcode project / `pod install` needed for iOS integration.** All SDK frameworks and resources are included in the release package.
 
 ### Step 1: Add the ANE to Your Project
 
@@ -74,7 +83,60 @@ Add the following Android manifest entries to your `*-app.xml`.
 >
 > **Note:** The AppLovin SDK key is already hardcoded in the ANE — you do not need to add it.
 
-### Step 3: Build with `android-studio` Target
+### Step 3 (iOS): Configure iOS and Build the IPA
+
+iOS integration requires **3 commands**: build with ADT, post-process, install.
+
+**3a.** Add the `<iPhone>` section to your `*-app.xml`:
+
+```xml
+<iPhone>
+    <InfoAdditions><![CDATA[
+        <key>MinimumOSVersion</key>
+        <string>14.0</string>
+        <key>UIDeviceFamily</key>
+        <array>
+            <string>1</string>
+            <string>2</string>
+        </array>
+        <!-- REQUIRED: Your AdMob App ID from Yodo1 MAS Dashboard -->
+        <key>GADApplicationIdentifier</key>
+        <string>YOUR_ADMOB_APP_ID</string>
+        <!-- REQUIRED: App Tracking Transparency (iOS 14+) -->
+        <key>NSUserTrackingUsageDescription</key>
+        <string>This identifier will be used to deliver personalized ads to you.</string>
+        <key>NSAppTransportSecurity</key>
+        <dict>
+            <key>NSAllowsArbitraryLoads</key>
+            <true/>
+        </dict>
+    ]]></InfoAdditions>
+    <requestedDisplayResolution>high</requestedDisplayResolution>
+</iPhone>
+```
+
+**3b.** Build, post-process, and install:
+
+```bash
+# 1. Build IPA with ADT (linker warnings are expected — they're harmless)
+java -jar $AIR_SDK_PATH/lib/adt.jar \
+    -package -target ipa-debug \
+    -provisioning-profile your.mobileprovision \
+    -storetype pkcs12 -keystore cert.p12 -storepass PASSWORD \
+    MyGame.ipa MyGame-app.xml MyGame.swf -extdir anes
+
+# 2. Post-process (one command — copies resources, embeds frameworks, patches binary, re-signs)
+./postprocess_ipa.sh MyGame.ipa
+
+# 3. Install on device
+ideviceinstaller install MyGame_postprocessed.ipa
+```
+
+> **First-time setup:** Before running `postprocess_ipa.sh`, edit its configuration section to set your Apple Development certificate name and entitlements file path. See the [iOS Integration Guide](native_src/ios/README.md) for details.
+>
+> **Why post-processing?** ADT doesn't handle SDK resource bundles, dynamic framework embedding, or an AIR AOT compiler bug with Network.framework symbols (iOS 18+). The script fixes all of this automatically.
+
+### Step 4 (Android): Build with `android-studio` Target
 
 Due to the large number of SDK dependencies (280+), you **must** use ADT's `android-studio` target instead of direct APK packaging:
 
@@ -467,11 +529,14 @@ package {
 
 ## Building the ANE from Source
 
-### Prerequisites
+> **Most users don't need this section.** If you're integrating the ANE into your game, use the pre-built release package and follow the steps above. This section is for contributors who want to modify the native code and rebuild.
+
+### Build Prerequisites
 
 - **AIR SDK** 51.x+ installed
-- **Android SDK** with build-tools 34+
-- **Java JDK 17** (required by Gradle 8.13)
+- **Android SDK** with build-tools 34+ (for Android)
+- **Java JDK 17** (required by Gradle 8.13, for Android)
+- **macOS** with Xcode 16+ and CocoaPods (`gem install cocoapods`) (for iOS)
 - **Apache Ant**: `brew install ant`
 
 ### Build Steps
@@ -496,8 +561,9 @@ chmod +x build.sh
 The build script will:
 1. Compile the Android native library via Gradle
 2. Collect all 285 runtime dependencies (JARs + AARs) with collision-safe filenames
-3. Compile the ActionScript SWC library
-4. Package everything into `yodo1mas.ane`
+3. Build the iOS static library and collect frameworks via CocoaPods + xcodebuild
+4. Compile the ActionScript SWC library
+5. Package everything into `yodo1mas.ane` (Android + iOS + default platforms)
 
 ### Project Structure
 
@@ -510,6 +576,12 @@ native_src/
 |           +-- Yodo1MasExtension.java  # FREExtension entry point
 |           +-- Yodo1MasContext.java     # Lazy dispatch pattern
 |           +-- Yodo1MasBridge.java      # SDK bridge + event dispatch
++-- ios/                                 # iOS native library
+|   +-- Podfile                          # CocoaPods dependencies (Yodo1MasFull 4.17.1)
+|   +-- build_ios.sh                     # iOS build script
+|   +-- Yodo1MasANE/                     # Objective-C source
+|       +-- Yodo1MasANE.m                # FRE bridge
+|       +-- Yodo1MasBridge.m             # SDK bridge + event dispatch
 +-- as/src/com/AdobeAir/Yodo1Mas/       # ActionScript library
 |   +-- Yodo1Mas.as                      # Main API (singleton)
 |   +-- Yodo1MasEvent.as                 # Event class
@@ -518,6 +590,8 @@ native_src/
 +-- config/
 |   +-- extension.xml                    # ANE descriptor
 |   +-- platform-android.xml             # Android platform options (285 deps)
+|   +-- platform-ios.xml                 # iOS platform options (76 frameworks + linker flags)
++-- postprocess_ipa.sh                   # iOS IPA post-processing (REQUIRED)
 +-- demo/                                # Demo AIR application
 |   +-- src/Yodo1MasDemo.as
 |   +-- Yodo1MasDemo-app.xml
@@ -595,17 +669,21 @@ If you remove the `air.` prefix from your package name, change the activity decl
 
 ## SDK Details
 
-- **Yodo1 MAS SDK**: `com.yodo1.mas:full:4.17.1`
+- **Yodo1 MAS SDK**: `com.yodo1.mas:full:4.17.1` (Android), `Yodo1MasFull 4.17.1` (iOS via CocoaPods)
 - **Minimum Android SDK**: 24 (Android 7.0)
 - **Target Android SDK**: 34 (Android 14)
-- **Total dependencies**: 285 (48 JARs + 237 AARs)
-- **ANE size**: ~150 MB (ARM + ARM64, all ad network adapters; x86 removed to reduce size)
+- **Minimum iOS**: 13.0 (deployment target), recommended 14.0+
+- **Total Android dependencies**: 285 (48 JARs + 237 AARs)
+- **Total iOS dependencies**: 76 static frameworks + 4 dynamic frameworks
+- **ANE size**: ~330 MB (Android ARM + ARM64, iOS arm64, all ad network adapters)
 
 ## Links
 
 - [Yodo1 MAS Dashboard](https://mas.yodo1.com/)
 - [Yodo1 MAS Android Docs](https://developers.yodo1.com/docs/sdk/guides/android/integration)
+- [Yodo1 MAS iOS Docs](https://developers.yodo1.com/docs/sdk/guides/ios/integration)
 - [AIR SDK Downloads](https://airsdk.harman.com/download)
+- [iOS Integration Details](native_src/ios/README.md)
 
 ## License
 
