@@ -20,6 +20,7 @@
 # ============================================================
 
 set -e
+set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -43,12 +44,14 @@ if command -v /usr/libexec/java_home &> /dev/null; then
     if [ -n "$JAVA17_HOME" ]; then
         export JAVA_HOME="$JAVA17_HOME"
         echo "Using Java 17: $JAVA_HOME"
+    elif [ -n "$JAVA_HOME" ]; then
+        echo "Using JAVA_HOME: $JAVA_HOME"
     fi
 fi
 
 # Step 1: Build Android native library and collect dependencies
 echo ""
-echo "[Step 1/5] Building Android native library..."
+echo "[Step 1/6] Building Android native library..."
 echo "--------------------------------------------"
 cd Yodo1MasAndroidProject
 
@@ -64,7 +67,7 @@ cd "$SCRIPT_DIR"
 
 # Step 2: Build iOS native library
 echo ""
-echo "[Step 2/5] Building iOS native library..."
+echo "[Step 2/6] Building iOS native library..."
 echo "--------------------------------------------"
 if [ -f "ios/build_ios.sh" ]; then
     cd ios
@@ -78,7 +81,7 @@ fi
 
 # Step 3: Copy FlashRuntimeExtensions.jar to Android project libs
 echo ""
-echo "[Step 3/5] Setting up FRE JAR..."
+echo "[Step 3/6] Setting up FRE JAR..."
 echo "--------------------------------------------"
 if [ ! -f "$FRE_JAR" ]; then
     echo "WARNING: FlashRuntimeExtensions.jar not found at: $FRE_JAR"
@@ -87,7 +90,7 @@ fi
 
 # Step 4: Compile ActionScript SWC
 echo ""
-echo "[Step 4/5] Compiling ActionScript SWC library..."
+echo "[Step 4/6] Compiling ActionScript SWC library..."
 echo "--------------------------------------------"
 COMPC="${AIR_SDK_PATH}/bin/compc"
 if [ -f "$COMPC" ]; then
@@ -105,7 +108,7 @@ fi
 
 # Step 5: Package ANE
 echo ""
-echo "[Step 5/5] Packaging ANE..."
+echo "[Step 5/6] Packaging ANE..."
 echo "--------------------------------------------"
 if command -v ant &> /dev/null; then
     ant
@@ -114,9 +117,18 @@ else
     echo "brew install ant  (on macOS)"
 fi
 
+# Step 6: Package iOS runtime resources (ios_resources/ + ios_resources.zip)
+echo ""
+echo "[Step 6/6] Packaging iOS runtime resources..."
+echo "--------------------------------------------"
+if [ -d "ios/build/resources" ]; then
+    ./package_ios_resources.sh
+fi
+
 echo ""
 echo "============================================"
 echo "  Build complete!"
 echo "============================================"
 echo "ANE should be at: dest/yodo1mas.ane"
 echo "Demo copy at:     demo/anes/yodo1mas.ane"
+echo "iOS resources:    ios_resources/ (and ios_resources.zip for the release)"

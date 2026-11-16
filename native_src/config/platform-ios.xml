@@ -78,17 +78,18 @@
         <packagedDependency>AFNetworking.framework</packagedDependency>
         <packagedDependency>YDYThinkingSDK.framework</packagedDependency>
         <packagedDependency>YYModel.framework</packagedDependency>
-        <!-- UIKit iOS 18+ stub classes -->
-        <packagedDependency>libUIKitStubs.a</packagedDependency>
-        <!-- Swift 6.0 typed throws AsyncIterator stubs -->
-        <packagedDependency>libSwiftConcurrencyStubs.a</packagedDependency>
-        <!-- Swift 6 system shim FORCE_LOAD stubs -->
-        <packagedDependency>libSwiftForceLoadStubs.a</packagedDependency>
+        <!-- Link fixes for the AIR SDK's old system stubs: Swift shim FORCE_LOAD
+             markers + Network.framework forwarders (source: ios/stubs/Yodo1MasLinkFixes.c) -->
+        <packagedDependency>libYodo1MasLinkFixes.a</packagedDependency>
+        <!-- Link-time text stubs (no code, not embedded) for iOS 18 symbols missing
+             from the AIR SDK's iOS 17 system stubs; see ios/stubs/*.framework -->
+        <packagedDependency>Yodo1MasUIKitCompat.framework</packagedDependency>
+        <packagedDependency>Yodo1MasSwiftConcurrencyCompat.framework</packagedDependency>
     </packagedDependencies>
 
     <linkerOptions>
-        <option>-rpath</option>
-        <option>@executable_path/Frameworks</option>
+        <!-- Where dyld finds the 4 dynamic frameworks (Frameworks/ in the .app) -->
+        <option>-rpath @executable_path/Frameworks</option>
         <option>-ObjC</option>
         <option>-lz</option>
         <option>-lsqlite3</option>
@@ -131,7 +132,9 @@
         <option>-framework SystemConfiguration</option>
         <option>-framework UIKit</option>
         <option>-framework WebKit</option>
-        <!-- Swift runtime -->
+        <!-- Swift runtime (the swiftCompatibility* back-deploy libraries come from
+             the AIR SDK's own lib/aot/lib/libSwiftCompat.a; do not add -l flags
+             for them, a stock AIR SDK has no such libraries) -->
         <option>-lswiftCore</option>
         <option>-lswiftFoundation</option>
         <option>-lswiftUIKit</option>
@@ -140,26 +143,15 @@
         <option>-lswiftCoreFoundation</option>
         <option>-lswiftCoreGraphics</option>
         <option>-lswiftDarwin</option>
-        <option>-lswiftCompatibility50</option>
-        <option>-lswiftCompatibility51</option>
-        <option>-lswiftCompatibility56</option>
-        <option>-lswiftCompatibilityConcurrency</option>
-        <option>-lswiftCompatibilityDynamicReplacements</option>
-        <option>-lswiftCompatibilityPacks</option>
 
-        <!-- Allow iOS 18+ UIKit symbols to be undefined (resolved at runtime) -->
-        <option>-U _OBJC_CLASS_$_UIUpdateLink</option>
-        <option>-U _OBJC_CLASS_$_UIUpdateActionPhase</option>
-        <!-- Swift 6 system shim libraries (stubs in ADT stub dir) -->
-        <option>-L/Users/rafay/AIRSDK/AIRSDK_51.1.1/lib/aot/stub</option>
-        <option>-lswift_Builtin_float</option>
-        <option>-lswift_errno</option>
-        <option>-lswift_math</option>
-        <option>-lswift_signal</option>
-        <option>-lswift_stdio</option>
-        <option>-lswift_time</option>
-        <option>-lswiftsys_time</option>
-        <option>-lswiftunistd</option>
+        <!-- Swift back-deployment libraries shipped with the AIR SDK (lib/aot/lib) -->
+        <option>-lSwiftCompat</option>
+        <!--
+            NOTE: never put a "$" in a linker option here. On macOS ADT runs the
+            link through /bin/sh without quoting, so "$..." is expanded as a shell
+            variable and the option is silently corrupted - so the same ANE would link
+            differently on macOS and Windows. Use ios/stubs instead.
+        -->
     </linkerOptions>
 
 </platform>

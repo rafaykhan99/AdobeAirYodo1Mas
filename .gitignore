@@ -42,6 +42,7 @@ native_src/ios/.symlinks/
 native_src/ios/Podfile.lock
 native_src/ios/Yodo1MasANE.xcworkspace/
 native_src/ios_resources/
+native_src/ios_resources.zip
 
 # IPA / dSYM build artifacts
 native_src/demo/*.ipa

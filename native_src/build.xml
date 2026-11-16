@@ -31,33 +31,24 @@
         <delete file="${BINARIES_FOLDER}/android/FlashRuntimeExtensions.jar"/>
     </target>
 
-    <!-- Copy the compiled iOS static library and frameworks to the build folder -->
+    <!-- Copy the compiled iOS static library, link fixes and frameworks to the build folder -->
     <target name="packios" depends="packjar">
         <echo message="Copying iOS native library and frameworks..."/>
 
-        <!-- Copy the compiled static library -->
-        <copy file="./ios/build/libYodo1MasANE.a"
-              tofile="${BINARIES_FOLDER}/ios/libYodo1MasANE.a"/>
+        <!-- ANE native code + link fixes for the AIR SDK's old system stubs -->
+        <copy file="./ios/build/libYodo1MasANE.a" todir="${BINARIES_FOLDER}/ios"/>
+        <copy file="./ios/build/libYodo1MasLinkFixes.a" todir="${BINARIES_FOLDER}/ios"/>
 
-        <!-- Copy Yodo1 MAS SDK frameworks from Pods -->
+        <!-- Yodo1 MAS SDK frameworks (+ link-time stub frameworks from ios/stubs) -->
         <copy todir="${BINARIES_FOLDER}/ios" flatten="false">
             <fileset dir="./ios/build/frameworks">
                 <include name="**/*.framework/**"/>
-                <include name="*.a"/>
             </fileset>
         </copy>
-        <!-- Copy SDK resource files required at runtime.
-             The Yodo1 MAS SDK uses [NSBundle bundleForClass:] to locate these,
-             and since the SDK is statically linked, it falls back to the main
-             app bundle. These MUST be in the .app root for SDK init to succeed. -->
-        <copy file="./ios/Pods/Yodo1MasFull/Yodo1MasFull/Assets/yodo1mas.plist"
-              tofile="${BINARIES_FOLDER}/ios/yodo1mas.plist"/>
-        <copy file="./ios/Pods/Yodo1MasCore/Yodo1MasCore/Assets/Yodo1MasCore.plist"
-              tofile="${BINARIES_FOLDER}/ios/Yodo1MasCore.plist"/>
-        <!-- Yodo1MasCore resource bundle (localization, privacy dialog images) -->
-        <copy todir="${BINARIES_FOLDER}/ios/Yodo1MasCore.bundle">
-            <fileset dir="./ios/Pods/Yodo1MasCore/Yodo1MasCore/Assets/Yodo1MasCore.bundle"/>
-        </copy>    </target>
+        <!-- Runtime resources (plists, bundles, dynamic frameworks) are NOT part of
+             the ANE: ADT cannot place them in the .app root from an ANE. They ship
+             separately as ios_resources/ (see package_ios_resources.sh). -->
+    </target>
 
     <!-- Extract library.swf from the compiled SWC and copy to platform folders -->
     <target name="unzipSwf" depends="packios">

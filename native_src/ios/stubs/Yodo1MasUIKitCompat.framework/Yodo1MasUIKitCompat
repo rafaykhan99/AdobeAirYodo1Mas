@@ -1,0 +1,30 @@
+--- !tapi-tbd
+# Link-time stub (text, no code). Never embedded in the app.
+#
+# Declares iOS 18 UIKit classes that the AIR SDK's iOS 17 UIKit stub lacks.
+# The $ld$previous$ entries tell the linker that, on iOS, these symbols live in
+# /System/Library/Frameworks/UIKit.framework/UIKit, so the app imports them
+# from the real UIKit (this stub's own install name never appears in the app).
+# FBAudienceNetwork references them as weak imports: they resolve to the real
+# classes on iOS 18+ and to nil on older iOS.
+#
+# A plain stub with UIKit's own install name breaks Xcode's ld-classic
+# (duplicate install name -> "dylibToOrdinal" assertion), and "-U" linker
+# options are corrupted by ADT on macOS (it runs the link through /bin/sh, so
+# "$" gets expanded). This form works with both ld-classic (ADT on macOS) and
+# the AIR SDK's lld (ADT on Windows).
+tbd-version:     4
+targets:         [ arm64-ios ]
+install-name:    '/System/Library/Frameworks/Yodo1MasUIKitCompat.framework/Yodo1MasUIKitCompat'
+current-version: 1
+exports:
+  - targets:         [ arm64-ios ]
+    symbols:         [ '$ld$previous$/System/Library/Frameworks/UIKit.framework/UIKit$$2$1.0$999.0$_OBJC_CLASS_$_UIUpdateActionPhase$',
+                       '$ld$previous$/System/Library/Frameworks/UIKit.framework/UIKit$$2$1.0$999.0$_OBJC_METACLASS_$_UIUpdateActionPhase$',
+                       '$ld$previous$/System/Library/Frameworks/UIKit.framework/UIKit$$2$1.0$999.0$_OBJC_CLASS_$_UIUpdateLink$',
+                       '$ld$previous$/System/Library/Frameworks/UIKit.framework/UIKit$$2$1.0$999.0$_OBJC_METACLASS_$_UIUpdateLink$',
+                       '_OBJC_CLASS_$_UIUpdateActionPhase',
+                       '_OBJC_METACLASS_$_UIUpdateActionPhase',
+                       '_OBJC_CLASS_$_UIUpdateLink',
+                       '_OBJC_METACLASS_$_UIUpdateLink' ]
+...

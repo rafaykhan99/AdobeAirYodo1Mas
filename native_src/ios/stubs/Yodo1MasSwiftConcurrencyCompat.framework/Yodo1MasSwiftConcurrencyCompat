@@ -1,0 +1,29 @@
+--- !tapi-tbd
+# Link-time stub (text, no code). Never embedded in the app.
+#
+# Declares Swift 6 concurrency symbols (AsyncIteratorProtocol.next(isolation:),
+# typed throws) that the AIR SDK's iOS 17 libswift_Concurrency stub lacks. The
+# $ld$previous$ entries bind them to the real
+# /usr/lib/swift/libswift_Concurrency.dylib. UnityAds and InMobi (IASDKCore)
+# reference them as weak imports: real implementation on iOS 18+, nil before.
+# See Yodo1MasUIKitCompat for why it is written this way.
+tbd-version:     4
+targets:         [ arm64-ios ]
+install-name:    '/System/Library/Frameworks/Yodo1MasSwiftConcurrencyCompat.framework/Yodo1MasSwiftConcurrencyCompat'
+current-version: 1
+swift-abi-version: 7
+exports:
+  - targets:         [ arm64-ios ]
+    symbols:         [ '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$s7FailureScITl$',
+                       '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$s7FailureSciTl$',
+                       '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$sScI4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKFTq$',
+                       '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$sScI7FailureScI_s5ErrorTn$',
+                       '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$sScIsE4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKF$',
+                       '$ld$previous$/usr/lib/swift/libswift_Concurrency.dylib$$2$1.0$999.0$_$sScIsE4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKFTu$',
+                       '_$s7FailureScITl',
+                       '_$s7FailureSciTl',
+                       '_$sScI4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKFTq',
+                       '_$sScI7FailureScI_s5ErrorTn',
+                       '_$sScIsE4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKF',
+                       '_$sScIsE4next9isolation7ElementQzSgScA_pSgYi_tYa7FailureQzYKFTu' ]
+...

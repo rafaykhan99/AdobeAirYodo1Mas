@@ -2,12 +2,18 @@
 # ============================================================
 # Package iOS Resources for Release
 # ============================================================
-# Collects all iOS SDK resources, dynamic frameworks, and tools
-# into a self-contained ios_resources/ directory for distribution.
+# Collects everything the Yodo1 MAS SDK needs inside the .app bundle
+# that ADT cannot take from the ANE:
+#   - SDK plists (yodo1mas.plist, Yodo1MasCore.plist)
+#   - resource / privacy-manifest bundles (*.bundle)
+#   - the 4 dynamic frameworks, under Frameworks/
 #
-# Run this AFTER building from source (pod install + build_ios.sh).
-# The resulting ios_resources/ folder should be included in the
-# GitHub Release alongside yodo1mas.ane and postprocess_ipa.sh.
+# The output folder mirrors the .app root, so app developers add it to
+# their ADT command with:   -C ios_resources .
+# ADT then copies and signs everything itself, on macOS or Windows.
+# No post-processing of the IPA is needed.
+#
+# Run this AFTER ios/build_ios.sh.
 #
 # Usage:
 #   cd native_src
@@ -15,96 +21,65 @@
 # ============================================================
 
 set -e
+set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-IOS_DIR="$SCRIPT_DIR/ios"
-PODS_DIR="$IOS_DIR/Pods"
-BUILD_DIR="$IOS_DIR/build"
+BUILD_DIR="$SCRIPT_DIR/ios/build"
 OUTPUT_DIR="$SCRIPT_DIR/ios_resources"
+
+# Dynamic frameworks (everything else in the ANE is statically linked)
+DYNAMIC_FRAMEWORKS=("AppLovinSDK" "InMobiSDK" "MolocoSDK" "OMSDK_Appodeal")
+
+if [ ! -d "$BUILD_DIR/resources" ]; then
+    echo "ERROR: $BUILD_DIR/resources not found. Run ios/build_ios.sh first." >&2
+    exit 1
+fi
 
 echo "============================================"
 echo "  Packaging iOS Resources for Release"
 echo "============================================"
 
-# Clean previous output
 rm -rf "$OUTPUT_DIR"
-mkdir -p "$OUTPUT_DIR/frameworks"
+mkdir -p "$OUTPUT_DIR/Frameworks"
 
-# ---- SDK Resource Files (plists + bundles) ----
 echo ""
-echo "[1/3] Copying SDK resource files..."
+echo "[1/2] SDK plists and bundles..."
+cp -R "$BUILD_DIR/resources/"* "$OUTPUT_DIR/"
+ls -1 "$BUILD_DIR/resources" | sed 's/^/  + /'
 
-copy_if_exists() {
-    local src="$1"
-    local name=$(basename "$src")
-    if [ -e "$src" ]; then
-        cp -R "$src" "$OUTPUT_DIR/"
-        echo "  + $name"
-    else
-        echo "  WARNING: $src not found"
-    fi
-}
-
-copy_if_exists "$PODS_DIR/Yodo1MasFull/Yodo1MasFull/Assets/yodo1mas.plist"
-copy_if_exists "$PODS_DIR/Yodo1MasCore/Yodo1MasCore/Assets/Yodo1MasCore.plist"
-copy_if_exists "$PODS_DIR/Yodo1MasCore/Yodo1MasCore/Assets/Yodo1MasCore.bundle"
-copy_if_exists "$PODS_DIR/Ads-Global/SDK/PAGAdSDK.bundle"
-copy_if_exists "$PODS_DIR/BigoADS/BigoADS/BigoADSRes.bundle"
-
-# ---- Dynamic Frameworks ----
 echo ""
-echo "[2/3] Copying dynamic frameworks..."
-
-DYNAMIC_FRAMEWORKS=("AppLovinSDK" "InMobiSDK" "MolocoSDK" "OMSDK_Appodeal")
-
+echo "[2/2] Dynamic frameworks..."
 for fw_name in "${DYNAMIC_FRAMEWORKS[@]}"; do
     FW_PATH="$BUILD_DIR/frameworks/$fw_name.framework"
-    if [ -d "$FW_PATH" ]; then
-        cp -R "$FW_PATH" "$OUTPUT_DIR/frameworks/"
-        echo "  + $fw_name.framework"
-    else
-        echo "  WARNING: $fw_name.framework not found in $BUILD_DIR/frameworks/"
+    if [ ! -f "$FW_PATH/$fw_name" ]; then
+        echo "ERROR: $FW_PATH not found" >&2
+        exit 1
     fi
+    if ! file "$FW_PATH/$fw_name" | grep -q "dynamically linked"; then
+        echo "ERROR: $fw_name.framework is not a dynamic framework" >&2
+        exit 1
+    fi
+    cp -R "$FW_PATH" "$OUTPUT_DIR/Frameworks/"
+    # Headers/Modules are not needed at runtime and only bloat the IPA
+    rm -rf "$OUTPUT_DIR/Frameworks/$fw_name.framework/Headers" \
+           "$OUTPUT_DIR/Frameworks/$fw_name.framework/Modules"
+    # Strip any signature from the vendor build; ADT signs the app's frameworks
+    rm -rf "$OUTPUT_DIR/Frameworks/$fw_name.framework/_CodeSignature"
+    echo "  + Frameworks/$fw_name.framework"
 done
 
-# ---- NW Symbol Patcher ----
-echo ""
-echo "[3/3] Copying patch_imports.py..."
+# Drop macOS metadata that would otherwise end up in the IPA
+find "$OUTPUT_DIR" -name ".DS_Store" -delete
 
-if [ -f "/tmp/patch_imports.py" ]; then
-    cp "/tmp/patch_imports.py" "$OUTPUT_DIR/"
-    echo "  + patch_imports.py"
-elif [ -f "$SCRIPT_DIR/patch_imports.py" ]; then
-    cp "$SCRIPT_DIR/patch_imports.py" "$OUTPUT_DIR/"
-    echo "  + patch_imports.py"
-else
-    echo "  WARNING: patch_imports.py not found at /tmp/patch_imports.py or $SCRIPT_DIR/"
-    echo "  You'll need to manually add it to ios_resources/ before releasing."
-fi
-
-# ---- Summary ----
-echo ""
-echo "============================================"
-echo "  Done! Release package contents:"
-echo "============================================"
-echo ""
-echo "ios_resources/"
-ls -1 "$OUTPUT_DIR" | while read item; do
-    if [ -d "$OUTPUT_DIR/$item" ]; then
-        echo "├── $item/"
-        ls -1 "$OUTPUT_DIR/$item" | while read sub; do
-            echo "│   ├── $sub"
-        done
-    else
-        echo "├── $item"
-    fi
-done
+# Zip for the GitHub release
+(cd "$SCRIPT_DIR" && rm -f ios_resources.zip && zip -qry ios_resources.zip ios_resources)
 
 SIZE=$(du -sh "$OUTPUT_DIR" | cut -f1)
 echo ""
-echo "Total size: $SIZE"
-echo ""
-echo "Include these in your GitHub Release:"
+echo "============================================"
+echo "  Done: $OUTPUT_DIR ($SIZE)"
+echo "        $SCRIPT_DIR/ios_resources.zip"
+echo "============================================"
+echo "Attach to the GitHub release:"
 echo "  1. dest/yodo1mas.ane"
-echo "  2. ios_resources/        (this directory)"
-echo "  3. postprocess_ipa.sh"
+echo "  2. ios_resources.zip"

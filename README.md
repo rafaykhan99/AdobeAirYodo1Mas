@@ -27,12 +27,12 @@ This ANE wraps the [Yodo1 MAS SDK 4.17.1](https://developers.yodo1.com/) for use
 
 | | Android | iOS |
 |---|---------|-----|
-| OS | Windows / macOS / Linux | **macOS only** |
-| Tools | Android SDK (build-tools 34+), Java JDK 17 | Xcode command line tools, Python 3 |
-| Signing | PKCS12 certificate (`.p12`) | Apple Development certificate + provisioning profile |
-| Device install | `adb` | `ideviceinstaller` (`brew install libimobiledevice ideviceinstaller`) |
+| OS | Windows / macOS / Linux | **Windows or macOS** |
+| Tools | Android SDK (build-tools 34+), Java JDK 17 | Nothing beyond the AIR SDK (no Xcode needed) |
+| Signing | PKCS12 certificate (`.p12`) | Your usual AIR iOS signing: `.p12` + `.mobileprovision` |
+| Release files | `yodo1mas.ane` | `yodo1mas.ane` + `ios_resources.zip` |
 
-> **No CocoaPods / Xcode project / `pod install` needed for iOS integration.** All SDK frameworks and resources are included in the release package.
+> **iOS builds work exactly like any other AIR iOS build**, on Windows or macOS: one ADT command produces a finished, signed IPA. There is no post-processing step, no Xcode project, no CocoaPods.
 
 ### Step 1: Add the ANE to Your Project
 
@@ -85,9 +85,9 @@ Add the following Android manifest entries to your `*-app.xml`.
 
 ### Step 3 (iOS): Configure iOS and Build the IPA
 
-iOS integration requires **3 commands**: build with ADT, post-process, install.
+**3a.** Download `ios_resources.zip` from the same [release](../../releases) as the ANE and unzip it next to your project. It contains files the SDK needs inside the app bundle that an ANE cannot deliver: SDK plists, ad-network resource / privacy-manifest bundles, and 4 dynamic frameworks (`Frameworks/`).
 
-**3a.** Add the `<iPhone>` section to your `*-app.xml`:
+**3b.** Add the `<iPhone>` section to your `*-app.xml`:
 
 ```xml
 <iPhone>
@@ -115,26 +115,25 @@ iOS integration requires **3 commands**: build with ADT, post-process, install.
 </iPhone>
 ```
 
-**3b.** Build, post-process, and install:
+**3c.** Build with ADT as usual, adding `-C ios_resources .` (the trailing `.` matters: it places the folder's *contents* at the root of the app):
 
 ```bash
-# 1. Build IPA with ADT (linker warnings are expected — they're harmless)
-java -jar $AIR_SDK_PATH/lib/adt.jar \
-    -package -target ipa-debug \
-    -provisioning-profile your.mobileprovision \
-    -storetype pkcs12 -keystore cert.p12 -storepass PASSWORD \
-    MyGame.ipa MyGame-app.xml MyGame.swf -extdir anes
-
-# 2. Post-process (one command — copies resources, embeds frameworks, patches binary, re-signs)
-./postprocess_ipa.sh MyGame.ipa
-
-# 3. Install on device
-ideviceinstaller install MyGame_postprocessed.ipa
+# App Store / TestFlight build (Windows or macOS)
+adt -package -target ipa-app-store \
+    -provisioning-profile MyGame_AppStore.mobileprovision \
+    -storetype pkcs12 -keystore distribution.p12 -storepass PASSWORD \
+    MyGame.ipa MyGame-app.xml MyGame.swf \
+    -C ios_resources . \
+    -extdir anes
 ```
 
-> **First-time setup:** Before running `postprocess_ipa.sh`, edit its configuration section to set your Apple Development certificate name and entitlements file path. See the [iOS Integration Guide](native_src/ios/README.md) for details.
+For a device test build use `-target ipa-debug` (or `ipa-test`) with your development `.p12` and profile.
+
+That's the whole iOS build: the IPA from ADT is final. ADT copies the resources, embeds the dynamic frameworks and signs everything itself, so you can build on Windows and only move the finished IPA to a Mac to upload it (Transporter), exactly as with any other AIR app.
+
+> **Using an IDE** (Animate, FlashDevelop, IntelliJ, VS Code AS3 extension...): add every item inside `ios_resources/` (the `.plist` files, the `.bundle` folders and the `Frameworks` folder) to the iOS package's included files, at the root of the app - not the `ios_resources` folder itself.
 >
-> **Why post-processing?** ADT doesn't handle SDK resource bundles, dynamic framework embedding, or an AIR AOT compiler bug with Network.framework symbols (iOS 18+). The script fixes all of this automatically.
+> Linker warnings during packaging (duplicate symbols, category method conflicts) are expected and harmless.
 
 ### Step 4 (Android): Build with `android-studio` Target
 
@@ -536,7 +535,8 @@ package {
 - **AIR SDK** 51.x+ installed
 - **Android SDK** with build-tools 34+ (for Android)
 - **Java JDK 17** (required by Gradle 8.13, for Android)
-- **macOS** with Xcode 16+ and CocoaPods (`gem install cocoapods`) (for iOS)
+- **macOS** with Xcode 16+ (tested with Xcode 26.6) and CocoaPods (`gem install cocoapods`) (for iOS)
+- A **stock** AIR SDK is enough: the ANE no longer depends on files copied into the AIR SDK by hand
 - **Apache Ant**: `brew install ant`
 
 ### Build Steps
@@ -555,15 +555,29 @@ cp $AIR_SDK_PATH/lib/android/FlashRuntimeExtensions.jar \
 chmod +x build.sh
 ./build.sh
 
-# Output: dest/yodo1mas.ane
+# Output: dest/yodo1mas.ane  +  ios_resources/ and ios_resources.zip
 ```
 
 The build script will:
 1. Compile the Android native library via Gradle
 2. Collect all 285 runtime dependencies (JARs + AARs) with collision-safe filenames
-3. Build the iOS static library and collect frameworks via CocoaPods + xcodebuild
+3. Build the iOS static library, the link-fix library and collect frameworks via CocoaPods + xcodebuild
 4. Compile the ActionScript SWC library
 5. Package everything into `yodo1mas.ane` (Android + iOS + default platforms)
+6. Package the iOS runtime resources into `ios_resources/` / `ios_resources.zip`
+
+#### Why the iOS side has link fixes
+
+ADT links iOS apps against the AIR SDK's own iOS 17-era system stubs (with Xcode's `ld-classic` on macOS, with the AIR SDK's `lld` on Windows). Modern ad SDKs need a few things those stubs lack or get wrong, fixed at link time so that app developers need no post-processing:
+
+| Problem | Fix |
+|---|---|
+| Swift 6 shim modules (`swift_errno`, `swift_math`, ...) not in the AIR SDK | `ios/stubs/Yodo1MasLinkFixes.c`: `__swift_FORCE_LOAD_$_*` markers |
+| AIR's `libSystem` stub still exports `nw_*`, so `nw_interface_get_type` / `nw_path_get_status` bound to libSystem and crashed at launch on current iOS | `ios/stubs/Yodo1MasLinkFixes.c`: local forwarders to Network.framework |
+| iOS 18 UIKit classes (`UIUpdateLink`) and Swift 6 concurrency symbols missing | `ios/stubs/*.framework`: text link stubs that bind them (weakly) to the real UIKit / `libswift_Concurrency` |
+| Swift back-deploy libraries | `-lSwiftCompat` (ships with the AIR SDK) |
+
+Never put a `$` in a `platform-ios.xml` linker option: on macOS ADT runs the linker through `/bin/sh` and the option gets mangled. After changing SDK versions, check a built IPA with `python3 tools/check_ios_binds.py <app binary>`.
 
 ### Project Structure
 
@@ -591,7 +605,9 @@ native_src/
 |   +-- extension.xml                    # ANE descriptor
 |   +-- platform-android.xml             # Android platform options (285 deps)
 |   +-- platform-ios.xml                 # iOS platform options (76 frameworks + linker flags)
-+-- postprocess_ipa.sh                   # iOS IPA post-processing (REQUIRED)
++-- ios/stubs/                           # iOS link fixes (see "Why the iOS side has link fixes")
++-- package_ios_resources.sh             # Builds ios_resources/ + ios_resources.zip
++-- tools/check_ios_binds.py             # Maintainer check of an IPA's imports
 +-- demo/                                # Demo AIR application
 |   +-- src/Yodo1MasDemo.as
 |   +-- Yodo1MasDemo-app.xml
@@ -609,7 +625,7 @@ cd native_src
 
 # 1. Rebuild the ANE
 ./build.sh
-# Output: dest/yodo1mas.ane
+# Output: dest/yodo1mas.ane  +  ios_resources/ and ios_resources.zip
 
 # 2. Copy the updated ANE to your demo/test project
 cp dest/yodo1mas.ane demo/anes/yodo1mas.ane
@@ -641,7 +657,7 @@ git push origin main
    ```
 2. Go to your GitHub repository → **Releases** → **Create a new release**
 3. Select the tag you just pushed
-4. Attach `native_src/dest/yodo1mas.ane` as a release asset
+4. Attach `native_src/dest/yodo1mas.ane` **and** `native_src/ios_resources.zip` as release assets
 5. Publish the release
 
 Users can then download the ANE directly from the Releases page.
