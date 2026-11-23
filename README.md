@@ -28,7 +28,7 @@ This ANE wraps the [Yodo1 MAS SDK 4.17.1](https://developers.yodo1.com/) for use
 | | Android | iOS |
 |---|---------|-----|
 | OS | Windows / macOS / Linux | **Windows or macOS** |
-| Tools | Android SDK (build-tools 34+), Java JDK 17 | Nothing beyond the AIR SDK (no Xcode needed) |
+| Tools | Android SDK (platform 36, build-tools 36+), Java JDK 17 | Nothing beyond the AIR SDK (no Xcode needed) |
 | Signing | PKCS12 certificate (`.p12`) | Your usual AIR iOS signing: `.p12` + `.mobileprovision` |
 | Release files | `yodo1mas.ane` | `yodo1mas.ane` + `ios_resources.zip` |
 
@@ -58,7 +58,7 @@ Add the following Android manifest entries to your `*-app.xml`.
 <android>
     <manifestAdditions><![CDATA[
         <manifest android:installLocation="auto">
-            <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34"/>
+            <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36"/>
 
             <!-- Required permissions -->
             <uses-permission android:name="android.permission.INTERNET"/>
@@ -137,56 +137,89 @@ That's the whole iOS build: the IPA from ADT is final. ADT copies the resources,
 
 ### Step 4 (Android): Build with `android-studio` Target
 
-Due to the large number of SDK dependencies (280+), you **must** use ADT's `android-studio` target instead of direct APK packaging:
+Due to the large number of SDK dependencies (280+), you **must** use ADT's `android-studio` target instead of direct APK packaging. ADT generates a Gradle project; you then make a few edits and build it with Gradle.
+
+> **Google Play requirements (checked November 2026):**
+> - New apps and app updates must target **API level 36** (`android:targetSdkVersion="36"` in Step 2).
+> - From **1 February 2027**, app updates must support **16 KB memory pages**. The native libraries in the ANE and in the AIR 51.1 runtime are already 16 KB aligned; the APK/AAB is packaged correctly only with **Android Gradle Plugin 8.5.1 or newer**. ADT generates AGP 8.1.1, so edit 3 below is required.
+
+**1. Generate the Gradle project** (on Windows use `^` instead of `\`, or put it on one line):
 
 ```bash
-# 1. Generate a Gradle project (instead of building an APK directly)
-adt -package \
-    -target android-studio \
+adt -package -target android-studio \
     -storetype pkcs12 -keystore your-cert.p12 -storepass YOUR_PASSWORD \
-    android_project \
-    YourApp-app.xml \
-    YourApp.swf \
-    -extdir anes
-
-# 2. Copy a working Gradle wrapper into the generated project
-#    (The AIR SDK's bundled wrapper may not work with AGP 8.x)
-cp /path/to/working/gradlew android_project/
-cp /path/to/working/gradle/wrapper/gradle-wrapper.jar android_project/gradle/wrapper/
-
-# 3. If you need to remove the "air." prefix from your package name:
-#    Edit android_project/app/build.gradle:
-#      namespace "com.yourcompany.yourgame"      (remove "air." prefix)
-#      applicationId "com.yourcompany.yourgame"   (remove "air." prefix)
-#    Edit android_project/app/src/main/AndroidManifest.xml:
-#      Remove the package="..." attribute entirely
-#      Change android:name=".AIRAppEntry" to:
-#        android:name="air.com.yourcompany.yourgame.AIRAppEntry"
-
-# 4. (Optional) Reduce APK size by removing emulator-only ABIs:
-#    By default the APK includes x86 and x86_64 native libraries which are only
-#    needed for Android emulators. Removing them saves ~45 MB.
-#    Edit android_project/app/build.gradle and add an ndk block inside defaultConfig:
-#
-#      defaultConfig {
-#          ...
-#          ndk {
-#              abiFilters 'arm64-v8a', 'armeabi-v7a'
-#          }
-#      }
-#
-#    To also drop older 32-bit ARM support (armeabi-v7a) for an additional ~16 MB
-#    savings, use only:
-#          ndk { abiFilters 'arm64-v8a' }
-#    Note: This does not affect the ANE itself, only what gets packaged in the APK.
-
-# 5. Build the APK with Gradle
-cd android_project
-JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew assembleDebug
-
-# 6. Install
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+    android_project YourApp-app.xml YourApp.swf -extdir anes
 ```
+
+ADT recreates `android_project` every time, so **redo edits 2-4 after each regeneration** (keep copies of the edited files to paste back).
+
+**2. Add a Gradle wrapper** (ADT does not create one). Copy from this repository's [`native_src/Yodo1MasAndroidProject/`](native_src/Yodo1MasAndroidProject):
+
+| Copy | To |
+|---|---|
+| `gradlew`, `gradlew.bat` | `android_project/` |
+| `gradle/wrapper/gradle-wrapper.jar` | `android_project/gradle/wrapper/` |
+
+and create `android_project/gradle/wrapper/gradle-wrapper.properties`:
+
+```properties
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+```
+
+**3. Update the Android Gradle Plugin** (required for API 36 and 16 KB alignment). In `android_project/build.gradle`:
+
+```groovy
+classpath "com.android.tools.build:gradle:8.13.0"    // was 8.1.1
+```
+
+and replace both `jcenter()` lines with `mavenCentral()` (JCenter is retired).
+
+**4. Sign release builds.** The generated project has no signing settings, so `bundleRelease` would produce an unsigned AAB. In `android_project/app/build.gradle`, add inside `android { ... }`:
+
+```groovy
+signingConfigs {
+    release {
+        storeFile file('C:/path/to/upload-key.p12')   // forward slashes, also on Windows
+        storeType 'pkcs12'
+        storePassword 'YOUR_PASSWORD'
+        keyAlias 'YOUR_ALIAS'      // keytool -list -keystore upload-key.p12 shows it ("1" for adt -certificate keys)
+        keyPassword 'YOUR_PASSWORD'
+    }
+}
+buildTypes {
+    release {
+        signingConfig signingConfigs.release
+    }
+}
+```
+
+Use the same key as your previous releases (or your Play App Signing upload key). Debug builds need no signing settings.
+
+**5. (Optional) Remove the `air.` prefix from the package name.** In `android_project/app/build.gradle` set `namespace` and `applicationId` without the prefix (e.g. `"com.yourcompany.yourgame"`). In `app/src/main/AndroidManifest.xml` remove the `package="..."` attribute and change `android:name=".AIRAppEntry"` to the full `android:name="air.com.yourcompany.yourgame.AIRAppEntry"`. Only do this for a new app, or one already published without the prefix.
+
+**6. (Optional) Reduce the APK size.** The APK includes x86 / x86_64 libraries that only Android emulators use (about 45 MB). In `app/build.gradle`, inside `defaultConfig { ... }`, add `ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }` (or only `'arm64-v8a'` to save about 16 MB more). App Bundles (AAB) are split per device by Google Play anyway.
+
+**7. Build with Java 17:**
+
+```bat
+REM Windows
+cd android_project
+set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.x-hotspot"
+REM Google Play: creates app\build\outputs\bundle\release\app-release.aab
+gradlew.bat bundleRelease
+REM Testing: creates app\build\outputs\apk\debug\app-debug.apk
+gradlew.bat assembleDebug
+```
+
+```bash
+# macOS / Linux
+cd android_project
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+./gradlew bundleRelease       # Google Play
+./gradlew assembleDebug       # testing
+```
+
+**8. Install a test build:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
 > **Why `android-studio` target?** Direct APK packaging via ADT fails with a D8 multidex error because modern D8 versions reject the `--main-dex-list` flag for `minSdk >= 21`. The `android-studio` target generates a standard Gradle project that builds correctly.
 
@@ -670,7 +703,7 @@ Users can then download the ANE directly from the Releases page.
 The AppLovin SDK key is hardcoded in the ANE, so this should not happen. If it does, ensure you are using the latest build of `yodo1mas.ane`.
 
 ### D8 multidex error when packaging APK
-Use `adt -package -target android-studio` instead of `-target apk`. See Step 3 above.
+Use `adt -package -target android-studio` instead of `-target apk`. See Step 4 above.
 
 ### "ad adapters is null" for all ad types
 This means adapter classes are missing from the APK. Rebuild the ANE using `./build.sh` to ensure all 285 dependencies are collected with unique filenames (the `collectDependencies` Gradle task handles filename collisions automatically).
