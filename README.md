@@ -135,93 +135,57 @@ That's the whole iOS build: the IPA from ADT is final. ADT copies the resources,
 >
 > Linker warnings during packaging (duplicate symbols, category method conflicts) are expected and harmless.
 
-### Step 4 (Android): Build with `android-studio` Target
+### Step 4 (Android): Build the App Bundle / APK with ADT
 
-Due to the large number of SDK dependencies (280+), you **must** use ADT's `android-studio` target instead of direct APK packaging. ADT generates a Gradle project; you then make a few edits and build it with Gradle.
+Package with ADT directly, like any AIR app: no Android Studio project, no Gradle edits.
 
-> **Google Play requirements (checked November 2026):**
-> - New apps and app updates must target **API level 36** (`android:targetSdkVersion="36"` in Step 2).
-> - From **1 February 2027**, app updates must support **16 KB memory pages**. The native libraries in the ANE and in the AIR 51.1 runtime are already 16 KB aligned; the APK/AAB is packaged correctly only with **Android Gradle Plugin 8.5.1 or newer**. ADT generates AGP 8.1.1, so edit 3 below is required.
+**Requirements**
 
-**1. Generate the Gradle project** (on Windows use `^` instead of `\`, or put it on one line):
+- **An Android SDK that ADT can find.** Install Android Studio (or the command-line tools) with the *Android 16 (API 36)* platform and build-tools 36. ADT finds the SDK in its default install location; if yours is elsewhere, either pass `-platformsdk <sdk folder>` right after the app descriptor in the ADT command, or set `AndroidPlatformSDK=C:/path/to/Sdk` in your AIR SDK's `lib/adt.cfg` (forward slashes; this also covers IDE builds). The `ANDROID_HOME` variable alone is **not** used by ADT.
+- **Java 17** (ADT runs Gradle 8.14 internally).
 
-```bash
-adt -package -target android-studio \
-    -storetype pkcs12 -keystore your-cert.p12 -storepass YOUR_PASSWORD \
-    android_project YourApp-app.xml YourApp.swf -extdir anes
+> **Important:** if ADT does not find an Android SDK it still produces an APK, but with its old packager, which leaves out the ad SDKs' manifest entries (77 activities, 12 providers, 7 services). Ads then crash with `ActivityNotFoundException` when shown. From v1.0.4 the ANE detects this at startup and fails `initSdk()` with error code `-1` and a message saying so, instead of crashing later.
+
+**1. Add these lines inside `<android>` in your `*-app.xml`** (next to `<manifestAdditions>`):
+
+```xml
+<android>
+    <manifestAdditions><![CDATA[ ... ]]></manifestAdditions>
+
+    <!-- Google Play 16 KB page-size support (needs Android Gradle Plugin 8.5.1+) -->
+    <androidGradlePluginVersion>8.13.0</androidGradlePluginVersion>
+    <gradleVersion>8.14.3</gradleVersion>
+</android>
 ```
 
-ADT recreates `android_project` every time, so **redo edits 2-4 after each regeneration** (keep copies of the edited files to paste back).
+Without them ADT uses Android Gradle Plugin 8.1.1, whose builds Google Play rejects for app updates from **1 February 2027** (16 KB memory page requirement). The native libraries in the ANE and the AIR runtime are already 16 KB aligned; these lines make ADT package them correctly in both the AAB and the APK.
 
-**2. Add a Gradle wrapper** (ADT does not create one). Copy from this repository's [`native_src/Yodo1MasAndroidProject/`](native_src/Yodo1MasAndroidProject):
+**2. Package** (on Windows use `^` instead of `\`, or one line):
 
-| Copy | To |
+```bash
+# Google Play: Android App Bundle
+adt -package -target aab \
+    -storetype pkcs12 -keystore upload-key.p12 -storepass YOUR_PASSWORD \
+    MyGame.aab MyGame-app.xml MyGame.swf -extdir anes
+
+# Testing: 64-bit APK, then install it
+adt -package -target apk -arch armv8 \
+    -storetype pkcs12 -keystore upload-key.p12 -storepass YOUR_PASSWORD \
+    MyGame.apk MyGame-app.xml MyGame.swf -extdir anes
+adb install -r MyGame.apk
+```
+
+If the SDK is not in its default location, add `-platformsdk C:\path\to\Sdk` after `MyGame-app.xml`. IDEs (Animate, FlashDevelop, IntelliJ ...) run the same ADT build and use the same descriptor settings.
+
+> **APKs: always build 64-bit (`-arch armv8`).** An APK holds one architecture and ADT's default is 32-bit ARM. The ad SDKs also contain 64-bit libraries, so a 64-bit phone starts a 32-bit APK as 64-bit, finds no 64-bit AIR runtime and **crashes on launch** (`UnsatisfiedLinkError ... nativeSurfaceCreated`). In an IDE, choose ARM64 / armv8 for APK builds. An AAB already contains 32-bit and 64-bit (Google Play delivers the right one), so it needs nothing.
+
+**Optional descriptor settings** (inside `<android>`):
+
+| Setting | Effect |
 |---|---|
-| `gradlew`, `gradlew.bat` | `android_project/` |
-| `gradle/wrapper/gradle-wrapper.jar` | `android_project/gradle/wrapper/` |
+| `<addAirToAppID>false</addAirToAppID>` | No `air.` prefix on the package name. Only for a new app, or one already published without the prefix. |
 
-and create `android_project/gradle/wrapper/gradle-wrapper.properties`:
-
-```properties
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.3-bin.zip
-```
-
-**3. Update the Android Gradle Plugin** (required for API 36 and 16 KB alignment). In `android_project/build.gradle`:
-
-```groovy
-classpath "com.android.tools.build:gradle:8.13.0"    // was 8.1.1
-```
-
-and replace both `jcenter()` lines with `mavenCentral()` (JCenter is retired).
-
-**4. Sign release builds.** The generated project has no signing settings, so `bundleRelease` would produce an unsigned AAB. In `android_project/app/build.gradle`, add inside `android { ... }`:
-
-```groovy
-signingConfigs {
-    release {
-        storeFile file('C:/path/to/upload-key.p12')   // forward slashes, also on Windows
-        storeType 'pkcs12'
-        storePassword 'YOUR_PASSWORD'
-        keyAlias 'YOUR_ALIAS'      // keytool -list -keystore upload-key.p12 shows it ("1" for adt -certificate keys)
-        keyPassword 'YOUR_PASSWORD'
-    }
-}
-buildTypes {
-    release {
-        signingConfig signingConfigs.release
-    }
-}
-```
-
-Use the same key as your previous releases (or your Play App Signing upload key). Debug builds need no signing settings.
-
-**5. (Optional) Remove the `air.` prefix from the package name.** In `android_project/app/build.gradle` set `namespace` and `applicationId` without the prefix (e.g. `"com.yourcompany.yourgame"`). In `app/src/main/AndroidManifest.xml` remove the `package="..."` attribute and change `android:name=".AIRAppEntry"` to the full `android:name="air.com.yourcompany.yourgame.AIRAppEntry"`. Only do this for a new app, or one already published without the prefix.
-
-**6. (Optional) Reduce the APK size.** The APK includes x86 / x86_64 libraries that only Android emulators use (about 45 MB). In `app/build.gradle`, inside `defaultConfig { ... }`, add `ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }` (or only `'arm64-v8a'` to save about 16 MB more). App Bundles (AAB) are split per device by Google Play anyway.
-
-**7. Build with Java 17:**
-
-```bat
-REM Windows
-cd android_project
-set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.x-hotspot"
-REM Google Play: creates app\build\outputs\bundle\release\app-release.aab
-gradlew.bat bundleRelease
-REM Testing: creates app\build\outputs\apk\debug\app-debug.apk
-gradlew.bat assembleDebug
-```
-
-```bash
-# macOS / Linux
-cd android_project
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)
-./gradlew bundleRelease       # Google Play
-./gradlew assembleDebug       # testing
-```
-
-**8. Install a test build:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
-
-> **Why `android-studio` target?** Direct APK packaging via ADT fails with a D8 multidex error because modern D8 versions reject the `--main-dex-list` flag for `minSdk >= 21`. The `android-studio` target generates a standard Gradle project that builds correctly.
+> **Why does ADT need an Android SDK?** The ANE brings 280+ Android libraries (AARs). With an SDK, ADT builds the app with Gradle, which merges their code, resources and manifests. ADT's old built-in packager cannot.
 
 ---
 
@@ -663,15 +627,16 @@ cd native_src
 # 2. Copy the updated ANE to your demo/test project
 cp dest/yodo1mas.ane demo/anes/yodo1mas.ane
 
-# 3. If using an android-studio Gradle project, clean and rebuild the APK
-cd demo/android_project
-JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew clean assembleDebug
+# 3. Build the demo APK directly with ADT (Android SDK + Java 17 needed)
+cd demo
+adt -package -target apk -storetype pkcs12 -keystore cert.p12 -storepass PASSWORD \
+    Yodo1MasDemo.apk Yodo1MasDemo-app.xml Yodo1MasDemo.swf -extdir anes
 
 # 4. (Optional) Install on device to verify
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r Yodo1MasDemo.apk
 
 # 5. Commit and push to GitHub
-cd ../../../
+cd ../../
 git add -A
 git commit -m "Update ANE: <describe your changes>"
 git push origin main
@@ -702,8 +667,11 @@ Users can then download the ANE directly from the Releases page.
 ### "Please check your AppLovinSdkKey" crash on startup
 The AppLovin SDK key is hardcoded in the ANE, so this should not happen. If it does, ensure you are using the latest build of `yodo1mas.ane`.
 
+### Ads crash with `ActivityNotFoundException`, or `initSdk()` fails with code -1 "packaged without the ad SDKs' Android manifest entries"
+ADT did not find an Android SDK and used its old packager. Install the Android SDK, or pass `-platformsdk <sdk folder>` (or set `AndroidPlatformSDK` in `lib/adt.cfg`), then package again. See Step 4.
+
 ### D8 multidex error when packaging APK
-Use `adt -package -target android-studio` instead of `-target apk`. See Step 4 above.
+Same cause: ADT is packaging without an Android SDK. See Step 4.
 
 ### "ad adapters is null" for all ad types
 This means adapter classes are missing from the APK. Rebuild the ANE using `./build.sh` to ensure all 285 dependencies are collected with unique filenames (the `collectDependencies` Gradle task handles filename collisions automatically).
@@ -711,8 +679,11 @@ This means adapter classes are missing from the APK. Rebuild the ANE using `./bu
 ### Error #3500: "extension context does not have a method"
 The ANE was not properly packaged or the SDK dependencies are missing. Rebuild with `./build.sh`.
 
-### ClassNotFoundException for AIRAppEntry after changing package name
-If you remove the `air.` prefix from your package name, change the activity declaration in `AndroidManifest.xml` from `.AIRAppEntry` to the fully qualified `air.com.yourcompany.yourgame.AIRAppEntry`.
+### App crashes on launch with `UnsatisfiedLinkError ... AIRWindowSurfaceView.nativeSurfaceCreated`
+The APK was built for 32-bit ARM (ADT's default) and the phone is 64-bit. Package the APK with `-arch armv8` (or choose ARM64 in your IDE), or build an AAB. See Step 4.
+
+### Removing the `air.` prefix from the package name
+Use `<addAirToAppID>false</addAirToAppID>` inside `<android>` in the app descriptor (see Step 4). Only for a new app, or one already published without the prefix.
 
 ---
 
@@ -720,7 +691,7 @@ If you remove the `air.` prefix from your package name, change the activity decl
 
 - **Yodo1 MAS SDK**: `com.yodo1.mas:full:4.17.1` (Android), `Yodo1MasFull 4.17.1` (iOS via CocoaPods)
 - **Minimum Android SDK**: 24 (Android 7.0)
-- **Target Android SDK**: 34 (Android 14)
+- **Target Android SDK (your app)**: 36 (Android 16), required by Google Play since 31 August 2026
 - **Minimum iOS**: 13.0 (deployment target), recommended 14.0+
 - **Total Android dependencies**: 285 (48 JARs + 237 AARs)
 - **Total iOS dependencies**: 76 static frameworks + 4 dynamic frameworks

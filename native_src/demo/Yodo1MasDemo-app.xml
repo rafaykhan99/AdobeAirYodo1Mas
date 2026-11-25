@@ -26,7 +26,7 @@
     <android>
         <manifestAdditions><![CDATA[
             <manifest android:installLocation="auto">
-                <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34"/>
+                <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36"/>
 
                 <!-- Required permissions -->
                 <uses-permission android:name="android.permission.INTERNET"/>
@@ -49,6 +49,10 @@
                 </application>
             </manifest>
         ]]></manifestAdditions>
+
+        <!-- Google Play 16 KB page-size support (Android Gradle Plugin 8.5.1+) -->
+        <androidGradlePluginVersion>8.13.0</androidGradlePluginVersion>
+        <gradleVersion>8.14.3</gradleVersion>
     </android>
 
     <!-- iOS Configuration (for future use) -->

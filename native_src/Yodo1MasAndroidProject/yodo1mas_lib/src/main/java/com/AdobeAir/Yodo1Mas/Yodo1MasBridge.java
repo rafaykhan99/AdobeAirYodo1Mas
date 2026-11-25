@@ -1,6 +1,8 @@
 package com.AdobeAir.Yodo1Mas;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -76,10 +78,49 @@ public class Yodo1MasBridge {
 
     // ============ SDK Init ============
 
+    // Activities the ad SDKs declare in their own AndroidManifest.xml. They are only in the app
+    // when ADT packages it through Gradle, which ADT does only if it finds an Android SDK
+    // (default install location, -platformsdk, or AndroidPlatformSDK in adt.cfg). Without one,
+    // ADT silently uses its old packager, drops these manifest entries, and the app crashes with
+    // ActivityNotFoundException as soon as an ad is shown.
+    private static final String[] REQUIRED_AD_ACTIVITIES = {
+        "com.applovin.adview.AppLovinFullscreenActivity",
+        "com.google.android.gms.ads.AdActivity"
+    };
+
+    /** Returns the first required ad activity missing from the app's manifest, or null. */
+    private String findMissingAdActivity() {
+        try {
+            PackageManager pm = activity.getPackageManager();
+            String pkg = activity.getPackageName();
+            for (String cls : REQUIRED_AD_ACTIVITIES) {
+                try {
+                    pm.getActivityInfo(new ComponentName(pkg, cls), 0);
+                } catch (PackageManager.NameNotFoundException e) {
+                    return cls;
+                }
+            }
+        } catch (Throwable t) {
+            // Never block init because the check itself failed
+            Log.w(TAG, "Could not check the app manifest: " + t);
+        }
+        return null;
+    }
+
     public void initSdk(final String appKey) {
         if (activity == null) {
             Log.e(TAG, "Activity is null, cannot init SDK");
             dispatchEvent("onSdkInitFailed", "Activity is null");
+            return;
+        }
+
+        String missing = findMissingAdActivity();
+        if (missing != null) {
+            String msg = "This app was packaged without the ad SDKs' Android manifest entries (" + missing
+                    + " is missing), so showing an ad would crash. ADT did not find an Android SDK:"
+                    + " install the Android SDK, or pass -platformsdk <sdk folder> to ADT, then package again.";
+            Log.e(TAG, msg);
+            dispatchEvent("onSdkInitFailed", "-1|" + msg);
             return;
         }
 
